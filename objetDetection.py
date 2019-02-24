@@ -1,46 +1,54 @@
 import cv2
-import numpy as np
+#import numpy as np
+import libLinea as lib
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
+
 
 while(1):
     ret,rframe = cap.read()
+    frame1=rframe[0:240, 0:640]
     frame=rframe[240:480, 0:640]
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    
-    #negro
-    lower_hsv = np.array([28,84,45],dtype=np.uint8)
-    higher_hsv = np.array([100,255,210],dtype=np.uint8)
-    
-    mask = cv2.inRange(hsv, lower_hsv, higher_hsv)
-
-    kernel = np.ones((9,9),np.uint8)
-    mascara=cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    mascara=cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        
-    M=cv2.add(mascara,mascara)
-    blur = cv2.bilateralFilter(M,9,75,75)
-    
-    ret,thresh = cv2.threshold(blur,127,255,cv2.THRESH_BINARY)
-    im2, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
     
     try:
-        cnt = contours[0]
+        cnt = lib.verde(frame)
         area = cv2.contourArea(cnt)
-        if area > 3007.5 :
-            M = cv2.moments(cnt) 
-            cx = int(M['m10']/M['m00'])
-            cy = int(M['m01']/M['m00'])
-            cv2.circle(frame, (cx, cy), 5, (0,0,255), -1)
-            rect = cv2.minAreaRect(cnt)
-            box = cv2.boxPoints(rect)
-            box = np.int0(box)
-            cv2.drawContours(frame,[box],0,(0,255,0),2) 
-            print (area)
+        MV = cv2.moments(cnt)
+        cxV = int(MV['m10']/MV['m00'])
+        if area>3000.5:
+            if cxV<320:
+                print("izquierda")
+            else:
+                print("derecha")
+                
     except ZeroDivisionError as err:
         print('Handling run-time error:', err)
-    except IndexError as er:
-        print('Handling run-time error:', er)
+    except IndexError:
+        try:
+            cntN=lib.negro(frame)
+            MN = cv2.moments(cntN) 
+            cxN = int(MN['m10']/MN['m00'])
+            if cxN < 213.5 :
+                print("derecha")
+            elif cxN < 426.5 :
+                print("adelante")
+            else :
+                print("izquierda")
+                
+        except ZeroDivisionError as err:
+            print('Handling run-time error:', err)
+        except IndexError:
+            try:
+                cntN1=lib.negro(frame1)
+                areaN1 = cv2.contourArea(cntN1)
+                if areaN1>100:
+                    print("no objeto")
+            except ZeroDivisionError as err:
+                print('Handling run-time error:', err)
+            except IndexError:
+                print("objeto")
+                
+
     
     cv2.imshow('M', frame)
     #cv2.imshow('Negro', M)
@@ -53,3 +61,4 @@ while(1):
 
 cap.release()
 cv2.destroyAllWindows()
+
