@@ -5,6 +5,7 @@ def callback(x):
     
     pass
 
+
 cap = cv2.VideoCapture(0)
 cv2.namedWindow('image')
 cv2.namedWindow('image1')
